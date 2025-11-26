@@ -8,7 +8,6 @@ import { FacilitiesModule } from './facilities/facilities.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { validateEnvironment } from './config/environment.config';
-import { TypedConfigService } from './config/typed-config.service';
 
 @Module({
   imports: [
@@ -59,12 +58,5 @@ import { TypedConfigService } from './config/typed-config.service';
     AuthModule,
     HealthModule,
   ],
-  providers: [
-    {
-      provide: TypedConfigService,
-      useExisting: ConfigService,
-    },
-  ],
-  exports: [TypedConfigService],
 })
 export class AppModule {}

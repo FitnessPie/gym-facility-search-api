@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { TypedConfigService } from '../config/typed-config.service';
+import { ConfigService } from '@nestjs/config';
 import { Facility, FacilityDocument } from './schemas/facility.schema';
 import {
   GetFacilitiesDto,
@@ -19,10 +19,10 @@ export class FacilitiesService {
   constructor(
     @InjectModel(Facility.name) private facilityModel: Model<FacilityDocument>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private configService: TypedConfigService,
+    private configService: ConfigService,
   ) {
-    this.defaultPageSize = this.configService.get('DEFAULT_PAGE_SIZE');
-    this.maxPageSize = this.configService.get('MAX_PAGE_SIZE');
+    this.defaultPageSize = this.configService.get('DEFAULT_PAGE_SIZE') || 20;
+    this.maxPageSize = this.configService.get('MAX_PAGE_SIZE') || 100;
   }
 
   /**
@@ -34,7 +34,7 @@ export class FacilitiesService {
     // Caching queries for facilities that are frequently accessed
     const cacheKey = this.generateCacheKey('facilities', { name, amenities, page, limit });
     const cachedResult = await this.cacheManager.get<PaginatedFacilitiesResponseDto>(cacheKey);
-    
+
     if (cachedResult) {
       return cachedResult;
     }
@@ -70,7 +70,7 @@ export class FacilitiesService {
 
   private buildMongoFilter(name?: string, amenities?: string[]): any {
     const filter: any = {};
-    
+
     if (name) {
       filter.name = this.createCaseInsensitiveRegex(name);
     }
@@ -93,7 +93,7 @@ export class FacilitiesService {
   async getFacilityById(id: string): Promise<FacilityResponseDto> {
     const cacheKey = this.generateCacheKey('facility', { id });
     const cachedFacility = await this.cacheManager.get<FacilityResponseDto>(cacheKey);
-    
+
     if (cachedFacility) {
       return cachedFacility;
     }

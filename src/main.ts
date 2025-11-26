@@ -1,12 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { TypedConfigService } from './config/typed-config.service';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(TypedConfigService);
+  const configService = app.get(ConfigService);
 
   const apiPrefix = configService.get('API_PREFIX');
   app.setGlobalPrefix(apiPrefix);

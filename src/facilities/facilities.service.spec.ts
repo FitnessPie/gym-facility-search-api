@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { TypedConfigService } from '../config/typed-config.service';
+import { ConfigService } from '@nestjs/config';
 import { FacilitiesService } from './facilities.service';
 import { Facility } from './schemas/facility.schema';
 import { NotFoundException } from '@nestjs/common';
@@ -58,7 +58,7 @@ describe('FacilitiesService', () => {
           useValue: mockCacheManager,
         },
         {
-          provide: TypedConfigService,
+          provide: ConfigService,
           useValue: {
             get: jest.fn((key: string) => {
               const config: Record<string, any> = {
