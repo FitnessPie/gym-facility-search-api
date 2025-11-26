@@ -35,14 +35,44 @@ Note: For the facilities queries that are frequently called, [I cache them using
 ###  API Authentication
 
 ```bash
-# Get authentication token
+# Step 1: Login with registered user credentials
 curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
+  -d '{"email":"hi@ph7.me","password":"fp-pierre"}'
 
-# Use the token to search facilities
-curl http://localhost:3000/api/v1/facilities?name=City \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+# Response:
+# {
+#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTJ2aWkyZThzZiIsImVtYWlsIjoiZGVtb0BleGFtcGxlLmNvbSIsIm5hbWUiOiJEZW1vIiwiaWF0IjoxNzMyNjk4MzY3LCJleHAiOjE3MzI3MDU1Njd9.abc123...",
+#   "user": {
+#     "id": "user-2vii2e8sf",
+#     "email": "hi@ph7.me",
+#     "name": "Pierre"
+#   }
+# }
+
+# Step 2: Extract token and use it to access protected resources
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTJ2aWkyZThzZiIsImVtYWlsIjoiZGVtb0BleGFtcGxlLmNvbSIsIm5hbWUiOiJEZW1vIiwiaWF0IjoxNzMyNjk4MzY3LCJleHAiOjE3MzI3MDU1Njd9.abc123..."
+
+# Search facilities
+curl "http://localhost:3000/api/v1/facilities?name=City&limit=5" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Get specific facility
+curl "http://localhost:3000/api/v1/facilities/facility-001" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Filter by amenities
+curl "http://localhost:3000/api/v1/facilities?amenities=Pool&amenities=Gym" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Automated workflow (extract token automatically)
+TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"hi@ph7.me","password":"fp-pierre"}' \
+  | jq -r '.token')
+
+curl "http://localhost:3000/api/v1/facilities?name=Fitness" \
+  -H "Authorization: Bearer $TOKEN" | jq .
 ```
 
 
