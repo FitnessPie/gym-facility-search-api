@@ -37,7 +37,7 @@ export class AuthService {
   private createMockUser(email: string): User {
     return {
       id: 'user-' + Math.random().toString(36).substr(2, 9),
-      email: email,
+      email,
       name: this.extractNameFromEmail(email),
     };
   }
