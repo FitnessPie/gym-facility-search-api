@@ -11,6 +11,9 @@ import {
   PaginatedFacilitiesResponseDto,
 } from './dto/facilities.dto';
 
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
 @Injectable()
 export class FacilitiesService {
   private readonly defaultPageSize: number;
@@ -21,8 +24,8 @@ export class FacilitiesService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private configService: ConfigService,
   ) {
-    this.defaultPageSize = this.configService.get('DEFAULT_PAGE_SIZE') || 20;
-    this.maxPageSize = this.configService.get('MAX_PAGE_SIZE') || 100;
+    this.defaultPageSize = this.configService.get('DEFAULT_PAGE_SIZE') || DEFAULT_PAGE_SIZE;
+    this.maxPageSize = this.configService.get('MAX_PAGE_SIZE') || MAX_PAGE_SIZE;
   }
 
   /**
