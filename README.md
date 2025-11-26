@@ -1,72 +1,74 @@
-# Facility Search API - Coding Challenge
+# FP RESTful Facility Search API
 
 ## Overview
 
-Build a RESTful API that allows users to search and filter fitness facilities. This challenge is designed to be completed within **2 hours** and focuses on API design, data handling, error handling, testing, and production-readiness considerations.
+A production-ready RESTful API built with NestJS, MongoDB, and Redis for searching and filtering fitness facilities. Features include JWT authentication, caching, rate limiting, pagination, and full Swagger documentation.
 
-**Important:** The goal is not necessarily to finish every feature. We understand the requirements are ambitious for 2 hours, and we're most interested in seeing what you prioritise and your approach to problem-solving. We value seeing your API design decisions, code quality, and how you think about production systems. A well-structured, partially complete solution with good fundamentals is better than a rushed, fully complete one.
+## Quick Start (Recommended: Docker)
 
-## Provided Assets
+The easiest way to run the entire application with all dependencies:
 
-- `assets/facilities.json` - Sample data containing 100 fitness facilities across Sydney and Melbourne
-- `assets/auth.ts` - Mock authentication utilities for token verification
+```bash
+# Start everything with Docker
+docker-compose up -d
 
-## Core Requirements (MVP for 2 hours)
+# Seed the database (optional - for demo data)
+docker-compose exec api npx corepack yarn seed
+```
 
-### 1. Search Facilities
+#### Endpoints
 
-- Create a secure endpoint to search facilities by name
-- Support real-time/partial matching (e.g., searching "City" should return "City Fitness Central")
-- Return facility name and address at minimum
-- The API must be performant (designed to handle 100,000+ facilities efficiently)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/auth/login` | Get JWT token | ❌ |
+| GET | `/api/v1/facilities` | Search/list facilities | ✅ |
+| GET | `/api/v1/facilities/:id` | Get facility details | ✅ |
+| GET | `/api/v1/health` | Health check | ❌ |
 
-### 2. Get Facility Details
+**Swagger docs**: http://localhost:3000/api/docs
 
-- Create a secure endpoint to retrieve a single facility by ID
-- Return all facility details including:
-  - Name
-  - Address
-  - List of facilities/amenities
-  - Location coordinates
+---
 
-### 3. Technical Requirements
+Note: For the facilities queries that are frequently called, [I cache them using NestJS cache with Redis](https://docs.nestjs.com/techniques/caching).
 
-- The project must be written in **TypeScript**
-- Implement this as you would for a production system
 
-## Stretch Goals (If you have extra time)
+###  API Authentication
 
-- Filter facilities by amenities (e.g., return only facilities with "Pool" or "Sauna")
-- Add pagination support for search results
-- Add health check endpoint
-- Add API documentation (OpenAPI/Swagger)
-- Implement rate limiting
-- Add caching layer for frequently accessed data
+```bash
+# Get authentication token
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'
 
-## Getting Started
+# Use the token to search facilities
+curl http://localhost:3000/api/v1/facilities?name=City \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
 
-1. Review the provided assets in the `assets/` folder
 
-2. Design your API structure:
+## Documentation
 
-   - What endpoints will you create?
-   - What request/response formats will you use?
-   - How will you structure your data?
+I use [`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) to generate the OpenAPI docs.
 
-3. Set up your project with your preferred tools and framework
+- **Swagger UI**: http://localhost:3000/api/docs (interactive API documentation)
+- **[SETUP_YARN.md](./SETUP_YARN.md)** - Yarn/Corepack setup information
 
-4. Implement your solution
 
-5. Document your API
+### Setup Steps
 
-## Submission
+```bash
+# 1. Start MongoDB and Redis
+docker-compose -f docker-compose.dev.yml up -d
 
-When you're ready to submit:
+# 2. Install dependencies
+npx corepack yarn install
 
-1. Ensure your code is well-structured and includes comments where helpful
-2. Be prepared to discuss your architectural decisions and trade-offs
-3. Submit your solution by either:
-   - Sharing a link to a public GitHub repository, or
-   - Zipping up your project folder and emailing it back to us
+# 3. Configure environment
+cp .env.example .env
 
-Good luck! We look forward to seeing what you build.
+# 4. Seed database (optional)
+npx corepack yarn seed
+
+# 5. Start development server
+npx corepack yarn start:dev
+```
