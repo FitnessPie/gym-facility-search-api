@@ -1,0 +1,39 @@
+# Development Docker Compose
+version: '3.8'
+
+services:
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: facility-api-mongodb-dev
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: facility-search
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_dev:/data/db
+    networks:
+      - facility-network-dev
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: facility-api-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - facility-network-dev
+
+networks:
+  facility-network-dev:
+    driver: bridge
+
+volumes:
+  mongodb_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
