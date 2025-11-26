@@ -38,9 +38,9 @@ async function bootstrap() {
       },
       'JWT-auth',
     )
-    .addTag('facilities', 'Facility search and management endpoints')
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('health', 'Health check endpoints')
+    .addTag('facilities')
+    .addTag('auth')
+    .addTag('health')
     .build();
 
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
