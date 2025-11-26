@@ -29,7 +29,7 @@ export class Facility {
   address: string;
 
   @ApiProperty()
-  @Prop({ type: Location, required: true, index: '2dsphere' })
+  @Prop({ type: Location, required: true })
   location: Location;
 
   @ApiProperty()
