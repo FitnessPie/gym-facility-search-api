@@ -10,7 +10,7 @@ RUN corepack enable
 WORKDIR /app
 
 # Copy package files
-COPY package.json .yarnrc.yml ./
+COPY package.json .yarnrc.yml yarn.lock ./
 
 # Install dependencies
 RUN yarn install --immutable
@@ -30,7 +30,7 @@ RUN corepack enable
 WORKDIR /app
 
 # Copy package files
-COPY package.json .yarnrc.yml ./
+COPY package.json .yarnrc.yml yarn.lock ./
 
 # Install production dependencies only
 RUN yarn workspaces focus --production
