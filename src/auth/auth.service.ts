@@ -8,15 +8,21 @@ interface User {
   name: string;
 }
 
+const DEMO_USER_EMAIL = 'hi@ph7.me';
+const DEMO_USER_NAME = 'Pierre';
+const INVALID_CREDENTIALS_MESSAGE = 'Invalid credentials';
+const INVALID_TOKEN_MESSAGE = 'Invalid token';
+const USER_ID_PREFIX = 'user-';
+
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(private jwtService: JwtService) { }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
     if (password === 'error') {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     const user = this.createMockUser(email);
@@ -30,15 +36,19 @@ export class AuthService {
       const payload = this.jwtService.verify(token);
       return this.createUserFromPayload(payload);
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException(INVALID_TOKEN_MESSAGE);
     }
   }
 
   private createMockUser(email: string): User {
+    const name = email === DEMO_USER_EMAIL
+      ? DEMO_USER_NAME
+      : this.extractNameFromEmail(email);
+
     return {
-      id: 'user-' + Math.random().toString(36).substr(2, 9),
+      id: USER_ID_PREFIX + Math.random().toString(36).substr(2, 9),
       email,
-      name: this.extractNameFromEmail(email),
+      name,
     };
   }
 
