@@ -12,14 +12,6 @@ npx corepack yarn seed
 **API**: http://localhost:3000/api/v1
 **Docs**: http://localhost:3000/api/docs
 
-### Endpoints
-
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| POST | `/api/v1/auth/login` | No |
-| GET | `/api/v1/facilities` | Yes |
-| GET | `/api/v1/facilities/:id` | Yes |
-| GET | `/api/v1/health` | No |
 
 ### Postman Collection
 
@@ -39,7 +31,7 @@ curl "http://localhost:3000/api/v1/facilities?name=City&limit=5" \
   -H "Authorization: Bearer $BEARER_TOKEN"
 ```
 
-**Query Parameters:**
+**Query Params for `/api/v1/facilities`**
 - `name` - Search by facility name
 - `amenities` - Filter by amenitie(s)
 - `page` - Page number for pagination
@@ -54,9 +46,24 @@ curl "http://localhost:3000/api/v1/facilities?name=City&limit=5" \
 ## Dev (using Yarn 4 - without using docker)
 
 ```bash
+# Redis/MongoDB
+docker-compose up -d mongodb redis
+
 yarn install
 yarn start:dev
+```
 
-# Run tests
+## Testing
+
+```bash
+# Unit tests
 yarn test
+
+# E2E tests (requires MongoDB and Redis running first)
+docker-compose up -d mongodb redis
+yarn seed
+yarn test:e2e
+
+# Test coverage
+yarn test:cov
 ```

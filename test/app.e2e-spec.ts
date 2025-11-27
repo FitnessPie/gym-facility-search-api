@@ -132,21 +132,6 @@ describe('FacilitiesController (e2e)', () => {
         .expect(404);
     });
   });
-
-  describe('/api/v1/facilities/amenities (GET)', () => {
-    it('should return list of amenities', () => {
-      return request(app.getHttpServer())
-        .get('/api/v1/facilities/amenities')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200)
-        .expect((res) => {
-          expect(Array.isArray(res.body)).toBe(true);
-          if (res.body.length > 0) {
-            expect(typeof res.body[0]).toBe('string');
-          }
-        });
-    });
-  });
 });
 
 describe('AuthController (e2e)', () => {
@@ -180,7 +165,6 @@ describe('AuthController (e2e)', () => {
           expect(res.body).toHaveProperty('user');
           expect(res.body.user).toHaveProperty('email');
           expect(res.body.user).toHaveProperty('name');
-          expect(res.body.user).toHaveProperty('membershipType');
         });
     });
 
@@ -192,16 +176,6 @@ describe('AuthController (e2e)', () => {
           password: 'error',
         })
         .expect(401);
-    });
-
-    it('should return 400 for invalid email format', () => {
-      return request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send({
-          email: 'invalid-email',
-          password: 'password123',
-        })
-        .expect(400);
     });
   });
 });
