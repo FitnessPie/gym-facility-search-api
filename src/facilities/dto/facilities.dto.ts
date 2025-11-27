@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsNumber, Min, Max, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class GetFacilitiesDto {
   @ApiPropertyOptional()
@@ -8,11 +8,19 @@ export class GetFacilitiesDto {
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Filter by amenities. Can be a single value or multiple values',
+    example: ['Pool', 'Gym']
+  })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return [value];
+    return value;
+  })
   @IsArray()
   @IsString({ each: true })
-  @Type(() => String)
   amenities?: string[];
 
   @ApiPropertyOptional({ default: 1 })
