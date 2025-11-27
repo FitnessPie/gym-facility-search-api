@@ -1,0 +1,24 @@
+{
+  "name": "Development",
+  "variables": [
+    {
+      "name": "token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXQybGpxb2l2eSIsImVtYWlsIjoiaGlAcGg3Lm1lIiwibmFtZSI6IlBpZXJyZSIsImlhdCI6MTc2NDE5MTYyMCwiZXhwIjoxNzY0MTk1MjIwfQ.R0qPLGBqwmnx6456WrhXidb1AHQVwxBa5apJ1T527QM",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    },
+    {
+      "name": "baseUrl",
+      "value": "http://localhost:3000/api/v1",
+      "type": "text",
+      "enabled": true,
+      "secret": false
+    }
+  ],
+  "info": {
+    "type": "bruno-environment",
+    "exportedAt": "2025-11-26T21:31:53.866Z",
+    "exportedUsing": "Bruno/v2.14.2"
+  }
+}
