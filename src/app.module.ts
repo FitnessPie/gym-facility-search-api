@@ -8,6 +8,8 @@ import { FacilitiesModule } from './facilities/facilities.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { validateEnvironment } from './config/environment.config';
+import { SeedService } from './database/seed.service';
+import { Facility, FacilitySchema } from './facilities/schemas/facility.schema';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { validateEnvironment } from './config/environment.config';
       }),
       inject: [ConfigService],
     }),
+
+    MongooseModule.forFeature([{ name: Facility.name, schema: FacilitySchema }]),
 
     CacheModule.registerAsync({
       isGlobal: true,
@@ -58,5 +62,6 @@ import { validateEnvironment } from './config/environment.config';
     AuthModule,
     HealthModule,
   ],
+  providers: [SeedService],
 })
 export class AppModule {}
