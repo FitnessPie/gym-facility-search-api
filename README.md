@@ -2,17 +2,17 @@
 
 RESTful API for searching fitness facilities. Built with NestJS, MongoDB, and Redis.
 
-## Quick Start
+## API Quick Start
 
 ```bash
 docker-compose up -d
-docker-compose exec api npx corepack yarn seed
+npx corepack yarn seed
 ```
 
-**API**: http://localhost:3000/api/v1  
+**API**: http://localhost:3000/api/v1
 **Docs**: http://localhost:3000/api/docs
 
-## Endpoints
+### Endpoints
 
 | Method | Endpoint | Auth |
 |--------|----------|------|
@@ -21,24 +21,42 @@ docker-compose exec api npx corepack yarn seed
 | GET | `/api/v1/facilities/:id` | Yes |
 | GET | `/api/v1/health` | No |
 
+### Postman Collection
+
+`api-client-collections/postman` is the Postman collection for authentication and requesting easily the endpoints.
+
+
 ## API Authentication
 
 ```bash
 # Login
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"hi@ph7.me","password":"fp-pierre"}'
-
-# Use token
-TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
+BEARER_TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"hi@ph7.me","password":"fp-pierre"}' | jq -r '.token')
 
+# Search facilities (and passing auth token from above to request the endpoint)
 curl "http://localhost:3000/api/v1/facilities?name=City&limit=5" \
-  -H "Authorization: Bearer $TOKEN"
+  -H "Authorization: Bearer $BEARER_TOKEN"
 ```
+
+**Query Parameters:**
+- `name` - Search by facility name
+- `amenities` - Filter by amenitie(s)
+- `page` - Page number for pagination
+- `limit` - Results per page (default: 20, max: 100)
+
 
 ## Documentation
 
-I use [`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) to generate the OpenAPI docs.
+[`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) was used to generate OpenAPI documentation.
 
+
+## Dev (using Yarn 4 - without using docker)
+
+```bash
+yarn install
+yarn start:dev
+
+# Run tests
+yarn test
+```
