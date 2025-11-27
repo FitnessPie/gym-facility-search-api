@@ -32,9 +32,10 @@ export class FacilitiesService {
    * Get facilities, with optional name and amenity filtering/pagination
    */
   async getFacilities(queryDto: GetFacilitiesDto): Promise<PaginatedFacilitiesResponseDto> {
-    const { name, amenities, page = 1, limit = this.defaultPageSize } = queryDto;
+    const { name, amenities, page = 1, limit: requestedLimit = this.defaultPageSize } = queryDto;
+    const limit = Math.min(requestedLimit, this.maxPageSize);
 
-    // Caching queries for facilities that are frequently accessed
+    /** Caching queries for facilities that are frequently accessed */
     const cacheKey = this.generateCacheKey('facilities', { name, amenities, page, limit });
     const cachedResult = await this.cacheManager.get<PaginatedFacilitiesResponseDto>(cacheKey);
 

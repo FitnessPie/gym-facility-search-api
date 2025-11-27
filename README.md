@@ -43,7 +43,7 @@ curl "http://localhost:3000/api/v1/facilities?name=City&limit=5" \
 - `name` - Search by facility name
 - `amenities` - Filter by amenitie(s)
 - `page` - Page number for pagination
-- `limit` - Results per page (default: 20, max: 100)
+- `limit` - Results per page
 
 
 ## Documentation
