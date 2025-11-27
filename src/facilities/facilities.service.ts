@@ -43,13 +43,13 @@ export class FacilitiesService {
     }
 
     const mongoFilter = this.buildMongoFilter(name, amenities);
-    const paginationOffset = (page - 1) * limit;
+    const offsetForPagination = this.calculateOffset(page, limit);
 
     const [facilities, totalCount] = await Promise.all([
       this.facilityModel
         .find(mongoFilter)
         .select(this.publicFieldsOnly())
-        .skip(paginationOffset)
+        .skip(offsetForPagination)
         .limit(limit)
         .lean()
         .exec(),
@@ -69,6 +69,10 @@ export class FacilitiesService {
     await this.cacheManager.set(cacheKey, paginatedResult);
 
     return paginatedResult;
+  }
+
+  private calculateOffset(page: number, limit: number): number {
+    return (page - 1) * limit;
   }
 
   private buildMongoFilter(name?: string, amenities?: string[]): any {
