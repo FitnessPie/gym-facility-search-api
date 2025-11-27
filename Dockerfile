@@ -50,3 +50,29 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Start application
 CMD ["node", "dist/main"]
+
+# Development stage
+FROM node:20-alpine AS development
+
+# Enable Corepack for Yarn support
+RUN corepack enable
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json .yarnrc.yml yarn.lock ./
+
+# Install all dependencies (including dev)
+RUN yarn install --immutable
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Set environment to development
+ENV NODE_ENV=development
+
+# Start in watch mode for hot-reload
+CMD ["yarn", "start:dev"]

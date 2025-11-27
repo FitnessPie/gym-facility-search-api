@@ -2,11 +2,34 @@
 
 RESTful API for searching fitness facilities. Built with NestJS, MongoDB, and Redis.
 
-## API Quick Start
+## Quick Start
 
+### Production
 ```bash
 docker-compose up -d
 npx corepack yarn seed
+```
+
+### Development (Choose One)
+
+**Option 1: Docker with hot-reload (full isolation)**
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+[`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) was used to generate OpenAPI documentation.
+
+
+**Option 2: Using Yarn (v4) - Fastest option for code changes
+```bash
+# Start dependencies only
+docker-compose up -d mongodb redis
+
+# Install project dependencies
+yarn install
+
+# Run API locally
+yarn start:dev
 ```
 
 **API**: http://localhost:3000/api/v1
@@ -37,21 +60,13 @@ curl "http://localhost:3000/api/v1/facilities?name=City&limit=5" \
 - `page` - Page number for pagination
 - `limit` - Results per page
 
+---
+
+Note: For the facilities queries that are frequently called, [I cache them using NestJS cache with Redis](https://docs.nestjs.com/techniques/caching).
 
 ## Documentation
 
-[`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) was used to generate OpenAPI documentation.
-
-
-## Dev (using Yarn 4 - without using docker)
-
-```bash
-# Redis/MongoDB
-docker-compose up -d mongodb redis
-
-yarn install
-yarn start:dev
-```
+[`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) was used to generate OpenAPI documentation at `/api/docs`.
 
 ## Testing
 
@@ -66,4 +81,7 @@ yarn test:e2e
 
 # Test coverage
 yarn test:cov
+
+# Watch mode
+yarn test:watch
 ```
