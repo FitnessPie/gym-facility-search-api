@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# Generated files
+openapi.json
+
 # Yarn
 .yarn/*
 !.yarn/patches
