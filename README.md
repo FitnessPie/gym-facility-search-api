@@ -62,7 +62,7 @@ curl "http://localhost:3000/api/v1/facilities?name=City&limit=5" \
 
 ---
 
-Note: For the facilities queries that are frequently called, [I cache them using NestJS cache with Redis](https://docs.nestjs.com/techniques/caching).
+Note: For the facilities queries that are frequently called, [I cache them using NestJS cache with Redis](https://docs.nestjs.com/techniques/caching) and [@nestjs/throttler](https://docs.nestjs.com/security/rate-limiting) for Rate Limiting.
 
 ## Documentation
 
