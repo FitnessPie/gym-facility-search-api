@@ -30,6 +30,7 @@ import { Facility, FacilitySchema } from './facilities/schemas/facility.schema';
 
     MongooseModule.forFeature([{ name: Facility.name, schema: FacilitySchema }]),
 
+    // Cache module configuration
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
@@ -42,6 +43,7 @@ import { Facility, FacilitySchema } from './facilities/schemas/facility.schema';
       inject: [ConfigService],
     }),
 
+    // Rate limiting configuration
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
