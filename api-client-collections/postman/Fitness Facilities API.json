@@ -39,6 +39,45 @@
       }
     },
     {
+      "name": "facilities by name",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "disabled": false,
+            "type": "default"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "description": "",
+        "url": {
+          "raw": "{{baseUrl}}/facilities?name=City&limit=5",
+          "protocol": "",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "facilities?name=City&limit=5"
+          ],
+          "query": [
+            {
+              "key": "name",
+              "value": "City"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ],
+          "variable": []
+        }
+      }
+    },
+    {
       "name": "facilities with amenities filters",
       "request": {
         "method": "GET",
@@ -83,45 +122,6 @@
       }
     },
     {
-      "name": "facilities by name",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "disabled": false,
-            "type": "default"
-          }
-        ],
-        "auth": {
-          "type": "noauth"
-        },
-        "description": "",
-        "url": {
-          "raw": "{{baseUrl}}/facilities?name=City&limit=5",
-          "protocol": "",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "facilities?name=City&limit=5"
-          ],
-          "query": [
-            {
-              "key": "name",
-              "value": "City"
-            },
-            {
-              "key": "limit",
-              "value": "5"
-            }
-          ],
-          "variable": []
-        }
-      }
-    },
-    {
       "name": "facilities",
       "request": {
         "method": "GET",
@@ -152,6 +152,29 @@
               "value": "20"
             }
           ],
+          "variable": []
+        }
+      }
+    },
+    {
+      "name": "health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "noauth"
+        },
+        "description": "",
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "protocol": "",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ],
+          "query": [],
           "variable": []
         }
       }
