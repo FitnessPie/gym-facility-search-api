@@ -13,7 +13,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'User login',
     description:
-      'Authenticate user and receive JWT token. Use password "error" to simulate failed login.',
+      'Authenticate user and receive JWT token. Password must be at least 6 characters.',
   })
   @ApiResponse({
     status: 200,

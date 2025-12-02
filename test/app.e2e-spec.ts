@@ -168,14 +168,33 @@ describe('AuthController (e2e)', () => {
         });
     });
 
-    it('should return 401 for invalid credentials', () => {
+    it('should return 401 for invalid credentials (short password)', () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({
           email: 'test@example.com',
-          password: 'error',
+          password: 'short',
         })
         .expect(401);
+    });
+
+    it('should return 400 for missing email', () => {
+      return request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({
+          password: 'password123',
+        })
+        .expect(400);
+    });
+
+    it('should return 400 for invalid email format', () => {
+      return request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({
+          email: 'invalid-email',
+          password: 'password123',
+        })
+        .expect(400);
     });
   });
 });

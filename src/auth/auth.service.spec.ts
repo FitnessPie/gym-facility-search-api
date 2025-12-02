@@ -48,7 +48,25 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException for invalid credentials', async () => {
       const loginDto = {
         email: 'test@example.com',
-        password: 'error',
+        password: 'short',
+      };
+
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException for empty password', async () => {
+      const loginDto = {
+        email: 'test@example.com',
+        password: '',
+      };
+
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException for empty password', async () => {
+      const loginDto = {
+        email: 'test@example.com',
+        password: '',
       };
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);

@@ -13,6 +13,7 @@ const DEMO_USER_NAME = 'Pierre';
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid credentials';
 const INVALID_TOKEN_MESSAGE = 'Invalid token';
 const USER_ID_PREFIX = 'user-';
+const MIN_PASSWORD_LENGTH = 6;
 
 @Injectable()
 export class AuthService {
@@ -21,14 +22,22 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
-    if (password === 'error') {
-      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
-    }
+    this.validateCredentials(email, password);
 
     const user = this.createMockUser(email);
     const token = this.generateJwtToken(user);
 
     return { token, user };
+  }
+
+  private validateCredentials(email: string, password: string): void {
+    if (!password || password.length < MIN_PASSWORD_LENGTH) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
+
+    if (!email || !email.includes('@')) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
   }
 
   async verifyToken(token: string): Promise<User> {
