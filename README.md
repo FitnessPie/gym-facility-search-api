@@ -1,4 +1,4 @@
-# FP Facility Search API
+# Gym Facility Search API
 
 RESTful API for searching fitness facilities. Built with NestJS, MongoDB, and Redis.
 
