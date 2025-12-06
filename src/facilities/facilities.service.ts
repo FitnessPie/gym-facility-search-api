@@ -29,7 +29,7 @@ export class FacilitiesService {
   }
 
   /**
-   * Get facilities, with optional name and amenity filtering/pagination
+   * Get facilities, with optional name and amenity filtering and pagination
    */
   async getFacilities(queryDto: GetFacilitiesDto): Promise<PaginatedFacilitiesResponseDto> {
     const { name, amenities, page = 1, limit: requestedLimit = this.defaultPageSize } = queryDto;
