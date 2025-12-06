@@ -20,7 +20,7 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 [`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction) was used to generate OpenAPI documentation.
 
 
-**Option 2: Using Yarn (v4) - Fastest option for code changes
+**Option 2: Using Yarn (v4) - Fastest option for code changes**
 ```bash
 # Start dependencies only
 docker-compose up -d mongodb redis
