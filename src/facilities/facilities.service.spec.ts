@@ -84,7 +84,14 @@ describe('FacilitiesService', () => {
     it('should return cached results if available', async () => {
       const cachedData = {
         data: mockFacilities,
-        meta: { total: 2, page: 1, limit: 20, totalPages: 1 },
+        meta: { 
+          total: 2, 
+          page: 1, 
+          limit: 20, 
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
       };
       mockCacheManager.get.mockResolvedValue(cachedData);
 

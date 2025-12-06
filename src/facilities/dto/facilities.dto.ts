@@ -89,5 +89,7 @@ export class PaginatedFacilitiesResponseDto {
     page: number;
     limit: number;
     totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
   };
 }

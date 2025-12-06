@@ -13,6 +13,9 @@ import {
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
+const CACHE_TTL_FACILITY_BY_ID = 3600;
+const CACHE_TTL_LIST_NO_FILTER = 1800;
+const CACHE_TTL_LIST_WITH_FILTER = 600;
 
 @Injectable()
 export class FacilitiesService {
@@ -42,19 +45,22 @@ export class FacilitiesService {
     } = queryDto;
     const limit = Math.min(requestedLimit, this.maxPageSize);
 
-    /** Caching queries for facilities that are frequently accessed */
-    const cacheKey = this.generateCacheKey('facilities', {
-      name,
-      amenities,
-      page,
-      limit,
-      sortBy,
-      sortOrder
-    });
-    const cachedResult = await this.cacheManager.get<PaginatedFacilitiesResponseDto>(cacheKey);
+    const shouldCache = this.shouldCacheQuery(name, amenities, page);
 
-    if (cachedResult) {
-      return cachedResult;
+    if (shouldCache) {
+      const cacheKey = this.generateCacheKey('facilities', {
+        name,
+        amenities,
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      });
+      const cachedResult = await this.cacheManager.get<PaginatedFacilitiesResponseDto>(cacheKey);
+
+      if (cachedResult) {
+        return cachedResult;
+      }
     }
 
     const mongoFilter = this.buildMongoFilter(name, amenities);
@@ -73,17 +79,32 @@ export class FacilitiesService {
       this.facilityModel.countDocuments(mongoFilter).exec(),
     ]);
 
+    const totalPages = Math.ceil(totalCount / limit);
+
     const paginatedResult: PaginatedFacilitiesResponseDto = {
       data: facilities as FacilityResponseDto[],
       meta: {
         total: totalCount,
         page,
         limit,
-        totalPages: Math.ceil(totalCount / limit),
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
     };
 
-    await this.cacheManager.set(cacheKey, paginatedResult);
+    if (shouldCache) {
+      const cacheKey = this.generateCacheKey('facilities', {
+        name,
+        amenities,
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      });
+      const cacheTTL = this.getCacheTTL(name, amenities);
+      await this.cacheManager.set(cacheKey, paginatedResult, cacheTTL);
+    }
 
     return paginatedResult;
   }
@@ -138,7 +159,7 @@ export class FacilitiesService {
     }
 
     const facilityDto = facility as FacilityResponseDto;
-    await this.cacheManager.set(cacheKey, facilityDto);
+    await this.cacheManager.set(cacheKey, facilityDto, CACHE_TTL_FACILITY_BY_ID);
 
     return facilityDto;
   }
@@ -149,5 +170,24 @@ export class FacilitiesService {
       .map((key) => `${key}:${params[key]}`)
       .join('|');
     return `${prefix}:${sortedParams}`;
+  }
+
+  private getCacheTTL(name?: string, amenities?: string[]): number {
+    if (name || (amenities && amenities.length > 0)) {
+      return CACHE_TTL_LIST_WITH_FILTER;
+    }
+    return CACHE_TTL_LIST_NO_FILTER;
+  }
+
+  private shouldCacheQuery(name?: string, amenities?: string[], page: number = 1): boolean {
+    if (!name && (!amenities || amenities.length === 0) && page <= 3) {
+      return true;
+    }
+
+    if ((name || amenities) && page <= 2) {
+      return true;
+    }
+
+    return false;
   }
 }
