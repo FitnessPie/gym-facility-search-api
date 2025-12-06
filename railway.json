@@ -1,0 +1,41 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "yarn install && yarn build"
+  },
+  "deploy": {
+    "startCommand": "node dist/main.js",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  },
+  "services": [
+    {
+      "name": "api",
+      "source": {
+        "image": "node:20-alpine"
+      },
+      "deploy": {
+        "numReplicas": 1,
+        "resources": {
+          "reservations": {
+            "memory": "512Mi",
+            "cpu": "0.5"
+          }
+        }
+      }
+    },
+    {
+      "name": "mongodb",
+      "source": {
+        "image": "mongo:7"
+      }
+    },
+    {
+      "name": "redis",
+      "source": {
+        "image": "redis:7-alpine"
+      }
+    }
+  ]
+}
