@@ -13,6 +13,7 @@ npx corepack yarn seed
 ### Development (Choose One)
 
 **Option 1: Docker with hot-reload (full isolation)**
+
 ```bash
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
