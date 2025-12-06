@@ -32,11 +32,25 @@ export class FacilitiesService {
    * Get facilities, with optional name and amenity filtering and pagination
    */
   async getFacilities(queryDto: GetFacilitiesDto): Promise<PaginatedFacilitiesResponseDto> {
-    const { name, amenities, page = 1, limit: requestedLimit = this.defaultPageSize } = queryDto;
+    const {
+      name,
+      amenities,
+      page = 1,
+      limit: requestedLimit = this.defaultPageSize,
+      sortBy = 'name',
+      sortOrder = 'asc'
+    } = queryDto;
     const limit = Math.min(requestedLimit, this.maxPageSize);
 
     /** Caching queries for facilities that are frequently accessed */
-    const cacheKey = this.generateCacheKey('facilities', { name, amenities, page, limit });
+    const cacheKey = this.generateCacheKey('facilities', {
+      name,
+      amenities,
+      page,
+      limit,
+      sortBy,
+      sortOrder
+    });
     const cachedResult = await this.cacheManager.get<PaginatedFacilitiesResponseDto>(cacheKey);
 
     if (cachedResult) {
@@ -45,11 +59,13 @@ export class FacilitiesService {
 
     const mongoFilter = this.buildMongoFilter(name, amenities);
     const offsetForPagination = this.calculateOffset(page, limit);
+    const sortOptions = this.buildSortOptions(sortBy, sortOrder);
 
     const [facilities, totalCount] = await Promise.all([
       this.facilityModel
         .find(mongoFilter)
         .select(this.publicFieldsOnly())
+        .sort(sortOptions)
         .skip(offsetForPagination)
         .limit(limit)
         .lean()
@@ -90,8 +106,13 @@ export class FacilitiesService {
     return filter;
   }
 
+  private buildSortOptions(sortBy: string, sortOrder: string): Record<string, 1 | -1> {
+    return { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+  }
+
   private createCaseInsensitiveRegex(searchTerm: string) {
-    return { $regex: searchTerm, $options: 'i' };
+    const sanitized = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return { $regex: sanitized, $options: 'i' };
   }
 
   private publicFieldsOnly() {

@@ -21,7 +21,7 @@ export class Facility {
   id: string;
 
   @ApiProperty()
-  @Prop({ required: true, index: 'text' })
+  @Prop({ required: true })
   name: string;
 
   @ApiProperty()

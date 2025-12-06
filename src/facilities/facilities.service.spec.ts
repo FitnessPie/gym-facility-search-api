@@ -35,6 +35,7 @@ describe('FacilitiesService', () => {
       countDocuments: jest.fn(),
       distinct: jest.fn(),
       select: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       lean: jest.fn().mockReturnThis(),

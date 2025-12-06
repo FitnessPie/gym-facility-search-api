@@ -1,6 +1,16 @@
-import { IsString, IsOptional, IsNumber, Min, Max, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, Max, IsArray, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
+
+export enum SortOrder {
+  ASC = 'asc',
+  DESC = 'desc',
+}
+
+export enum SortField {
+  NAME = 'name',
+  ID = 'id',
+}
 
 export class GetFacilitiesDto {
   @ApiPropertyOptional()
@@ -37,6 +47,16 @@ export class GetFacilitiesDto {
   @Min(1)
   @Max(100)
   limit?: number = 20;
+
+  @ApiPropertyOptional({ enum: SortField, default: SortField.NAME })
+  @IsOptional()
+  @IsEnum(SortField)
+  sortBy?: SortField = SortField.NAME;
+
+  @ApiPropertyOptional({ enum: SortOrder, default: SortOrder.ASC })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sortOrder?: SortOrder = SortOrder.ASC;
 }
 
 export class FacilityResponseDto {
