@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'crypto';
 import { LoginDto, AuthResponseDto, JwtPayload } from './dto/auth.dto';
 
 interface User {
@@ -55,7 +56,7 @@ export class AuthService {
       : this.extractNameFromEmail(email);
 
     return {
-      id: USER_ID_PREFIX + Math.random().toString(36).substr(2, 9),
+      id: USER_ID_PREFIX + randomUUID(),
       email,
       name,
     };
