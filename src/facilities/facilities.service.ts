@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -19,6 +19,7 @@ const CACHE_TTL_LIST_WITH_FILTER = 600;
 
 @Injectable()
 export class FacilitiesService {
+  private readonly logger = new Logger(FacilitiesService.name);
   private readonly defaultPageSize: number;
   private readonly maxPageSize: number;
 
@@ -29,6 +30,7 @@ export class FacilitiesService {
   ) {
     this.defaultPageSize = this.configService.get('DEFAULT_PAGE_SIZE') || DEFAULT_PAGE_SIZE;
     this.maxPageSize = this.configService.get('MAX_PAGE_SIZE') || MAX_PAGE_SIZE;
+    this.logger.log('FacilitiesService initialized');
   }
 
   /**
@@ -38,10 +40,11 @@ export class FacilitiesService {
     const {
       name,
       amenities,
+      amenityMatchMode = 'all',
       page = 1,
       limit: requestedLimit = this.defaultPageSize,
       sortBy = 'name',
-      sortOrder = 'asc'
+      sortOrder = 'asc',
     } = queryDto;
     const limit = Math.min(requestedLimit, this.maxPageSize);
 
@@ -51,6 +54,7 @@ export class FacilitiesService {
       const cacheKey = this.generateCacheKey('facilities', {
         name,
         amenities,
+        amenityMatchMode,
         page,
         limit,
         sortBy,
@@ -59,11 +63,12 @@ export class FacilitiesService {
       const cachedResult = await this.cacheManager.get<PaginatedFacilitiesResponseDto>(cacheKey);
 
       if (cachedResult) {
+        this.logger.debug(`Cache hit for query: ${cacheKey}`);
         return cachedResult;
       }
     }
 
-    const mongoFilter = this.buildMongoFilter(name, amenities);
+    const mongoFilter = this.buildMongoFilter(name, amenities, amenityMatchMode);
     const offsetForPagination = this.calculateOffset(page, limit);
     const sortOptions = this.buildSortOptions(sortBy, sortOrder);
 
@@ -104,8 +109,10 @@ export class FacilitiesService {
       });
       const cacheTTL = this.getCacheTTL(name, amenities);
       await this.cacheManager.set(cacheKey, paginatedResult, cacheTTL);
+      this.logger.debug(`Cached query result: ${cacheKey}, TTL: ${cacheTTL}s`);
     }
 
+    this.logger.log(`Retrieved ${facilities.length} facilities (page ${page}/${totalPages})`);
     return paginatedResult;
   }
 
@@ -113,7 +120,7 @@ export class FacilitiesService {
     return (page - 1) * limit;
   }
 
-  private buildMongoFilter(name?: string, amenities?: string[]): any {
+  private buildMongoFilter(name?: string, amenities?: string[], amenityMatchMode: string = 'all'): any {
     const filter: any = {};
 
     if (name) {
@@ -121,7 +128,26 @@ export class FacilitiesService {
     }
 
     if (amenities && amenities.length > 0) {
-      filter.facilities = { $all: amenities };
+      // Case-insensitive amenity matching
+      const amenityRegexes = amenities.map((amenity) => new RegExp(`^${amenity}$`, 'i'));
+
+      switch (amenityMatchMode) {
+        case 'all':
+          // Must have all specified amenities (case-insensitive)
+          filter.facilities = { $all: amenityRegexes };
+          break;
+        case 'any':
+          // Must have at least one of the specified amenities
+          filter.facilities = { $in: amenityRegexes };
+          break;
+        case 'exact':
+          // Must have exactly these amenities (no more, no less)
+          filter.$and = [
+            { facilities: { $all: amenityRegexes } },
+            { facilities: { $size: amenities.length } }
+          ];
+          break;
+      }
     }
 
     return filter;
@@ -145,6 +171,7 @@ export class FacilitiesService {
     const cachedFacility = await this.cacheManager.get<FacilityResponseDto>(cacheKey);
 
     if (cachedFacility) {
+      this.logger.debug(`Cache hit for facility: ${id}`);
       return cachedFacility;
     }
 
@@ -155,11 +182,13 @@ export class FacilitiesService {
       .exec();
 
     if (!facility) {
+      this.logger.warn(`Facility not found: ${id}`);
       throw new NotFoundException(`Facility with ID "${id}" not found`);
     }
 
     const facilityDto = facility as FacilityResponseDto;
     await this.cacheManager.set(cacheKey, facilityDto, CACHE_TTL_FACILITY_BY_ID);
+    this.logger.debug(`Cached facility: ${id}`);
 
     return facilityDto;
   }
