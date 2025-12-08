@@ -17,7 +17,14 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "ts-node src/database/seed.ts"
+    "seed": "ts-node src/database/seed.ts",
+    "deploy:vercel": "vercel --prod",
+    "deploy:vercel:preview": "vercel",
+    "deploy:lambda": "serverless deploy",
+    "deploy:lambda:dev": "serverless deploy --stage dev",
+    "deploy:lambda:prod": "serverless deploy --stage prod",
+    "lambda:local": "serverless offline",
+    "lambda:logs": "serverless logs -f api --tail"
   },
   "keywords": [],
   "author": "",
