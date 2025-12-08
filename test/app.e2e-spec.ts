@@ -26,6 +26,9 @@ describe('FacilitiesController (e2e)', () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
       }),
     );
 
@@ -187,14 +190,17 @@ describe('AuthController (e2e)', () => {
         .expect(400);
     });
 
-    it('should return 400 for invalid email format', () => {
-      return request(app.getHttpServer())
+    it('should return 400 for invalid email format', async () => {
+      const response = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({
           email: 'invalid-email',
           password: 'password123',
-        })
-        .expect(400);
+        });
+
+      console.log('Status:', response.status);
+      console.log('Body:', response.body);
+      expect(response.status).toBe(400);
     });
   });
 });

@@ -22,21 +22,9 @@ import { Facility, FacilitySchema } from './facilities/schemas/facility.schema';
 
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-
-        return {
-          uri: configService.get<string>('MONGODB_URI'),
-          // Lambda-optimized connection pool
-          maxPoolSize: isLambda ? 1 : 10,
-          minPoolSize: isLambda ? 0 : 2,
-          socketTimeoutMS: 30000,
-          serverSelectionTimeoutMS: 5000,
-          // Reuse connections across Lambda invocations
-          retryWrites: true,
-          retryReads: true,
-        };
-      },
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+      }),
       inject: [ConfigService],
     }),
 
@@ -46,25 +34,12 @@ import { Facility, FacilitySchema } from './facilities/schemas/facility.schema';
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-
-        if (isLambda) {
-          // Use in-memory cache for Lambda (avoid Redis connection issues)
-          return {
-            ttl: configService.get<number>('REDIS_TTL'),
-            max: 100, // Cache up to 100 items in memory
-          };
-        }
-
-        // Use Redis for traditional deployments
-        return {
-          store: redisStore,
-          host: configService.get<string>('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT'),
-          ttl: configService.get<number>('REDIS_TTL'),
-        };
-      },
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get<string>('REDIS_HOST'),
+        port: configService.get<number>('REDIS_PORT'),
+        ttl: configService.get<number>('REDIS_TTL'),
+      }),
       inject: [ConfigService],
     }),
 

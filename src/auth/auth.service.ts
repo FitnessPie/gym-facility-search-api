@@ -23,7 +23,7 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
-    this.validateCredentials(email, password);
+    this.validateCredentials(password);
 
     const user = this.createMockUser(email);
     const token = this.generateJwtToken(user);
@@ -31,12 +31,8 @@ export class AuthService {
     return { token, user };
   }
 
-  private validateCredentials(email: string, password: string): void {
+  private validateCredentials(password: string): void {
     if (!password || password.length < MIN_PASSWORD_LENGTH) {
-      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
-    }
-
-    if (!email || !email.includes('@')) {
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
   }

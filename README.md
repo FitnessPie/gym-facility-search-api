@@ -71,6 +71,8 @@ Note: For the facilities queries that are frequently called, [I cache them using
 
 ## Testing
 
+### Run Tests
+
 ```bash
 # Unit tests
 yarn test
