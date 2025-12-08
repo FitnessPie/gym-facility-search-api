@@ -1,0 +1,126 @@
+# Artillery Load Testing Configuration
+# Run with: artillery run artillery.yml --output report.json
+# Report: artillery report report.json
+
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    # Ramp up load
+    - duration: 60
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp up load"
+    # Sustained load (SLO validation)
+    - duration: 120
+      arrivalRate: 50
+      name: "Sustain load - SLO testing"
+    # Peak load
+    - duration: 60
+      arrivalRate: 50
+      rampTo: 100
+      name: "Peak load"
+    # Cool down
+    - duration: 30
+      arrivalRate: 100
+      rampTo: 10
+      name: "Cool down"
+  
+  # SLO thresholds
+  ensure:
+    p95: 500    # P95 latency < 500ms
+    p99: 1000   # P99 latency < 1000ms
+    maxErrorRate: 0.5  # < 0.5% error rate
+  
+  # Load environment variables
+  variables:
+    token: "{{ $processEnvironment.AUTH_TOKEN }}"
+  
+  # Plugins for better reporting
+  plugins:
+    statsd:
+      host: localhost
+      port: 8125
+      prefix: "artillery"
+  
+  # HTTP settings
+  http:
+    timeout: 10
+  
+  # Reporting
+  processor: "./artillery-processor.js"  # Optional custom processor
+
+# Test scenarios with realistic traffic mix
+scenarios:
+  # 70% - Search/list facilities
+  - name: "Search facilities"
+    weight: 70
+    flow:
+      - get:
+          url: "/api/v1/facilities?page={{ $randomNumber(1, 10) }}&limit=10"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          capture:
+            - json: "$.meta.total"
+              as: "totalFacilities"
+          expect:
+            - statusCode: 200
+            - hasProperty: data
+            - hasProperty: meta
+            - contentType: json
+      - think: 1  # 1 second user think time
+      
+      # Follow-up search with filters
+      - get:
+          url: "/api/v1/facilities?name={{ $randomString() }}&page=1&limit=10"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+      - think: 2
+  
+  # 20% - Get facility by ID
+  - name: "Get facility by ID"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/v1/facilities/facility-{{ $randomNumber(1, 100) | pad(3) }}"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode:
+                - 200
+                - 404  # Allow 404 for non-existent IDs
+      - think: 1
+  
+  # 10% - Authentication flow
+  - name: "Authenticate"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "test@example.com"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "newToken"
+          expect:
+            - statusCode: 200
+            - hasProperty: token
+            - hasProperty: user
+      
+      # Use the new token to make a request
+      - get:
+          url: "/api/v1/facilities?page=1&limit=10"
+          headers:
+            Authorization: "Bearer {{ newToken }}"
+          expect:
+            - statusCode: 200
+      - think: 1
+
+# Custom functions for realistic data
+# To use: Create artillery-processor.js with helper functions
