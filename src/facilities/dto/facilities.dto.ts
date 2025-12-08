@@ -12,6 +12,12 @@ export enum SortField {
   ID = 'id',
 }
 
+export enum AmenityMatchMode {
+  ALL = 'all',      // Facility must have all specified amenities
+  ANY = 'any',      // Facility must have at least one amenity
+  EXACT = 'exact',  // Facility must have exactly these amenities (no more, no less)
+}
+
 export class GetFacilitiesDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -20,7 +26,7 @@ export class GetFacilitiesDto {
 
   @ApiPropertyOptional({
     type: [String],
-    description: 'Filter by amenities. Can be a single value or multiple values',
+    description: 'Filter by amenities (case-insensitive). Can be a single value or multiple values',
     example: ['Pool', 'Gym']
   })
   @IsOptional()
@@ -32,6 +38,15 @@ export class GetFacilitiesDto {
   @IsArray()
   @IsString({ each: true })
   amenities?: string[];
+
+  @ApiPropertyOptional({
+    enum: AmenityMatchMode,
+    default: AmenityMatchMode.ALL,
+    description: 'How to match amenities: "all" (must have all), "any" (at least one), "exact" (exactly these)',
+  })
+  @IsOptional()
+  @IsEnum(AmenityMatchMode)
+  amenityMatchMode?: AmenityMatchMode = AmenityMatchMode.ALL;
 
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()
