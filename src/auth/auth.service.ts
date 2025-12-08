@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { LoginDto, AuthResponseDto, JwtPayload } from './dto/auth.dto';
@@ -18,6 +18,8 @@ const MIN_PASSWORD_LENGTH = 6;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(private jwtService: JwtService) { }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -28,11 +30,13 @@ export class AuthService {
     const user = this.createMockUser(email);
     const token = this.generateJwtToken(user);
 
+    this.logger.log(`User logged in: ${email}`);
     return { token, user };
   }
 
   private validateCredentials(password: string): void {
     if (!password || password.length < MIN_PASSWORD_LENGTH) {
+      this.logger.warn('Login attempt with invalid password length');
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
   }
@@ -41,7 +45,8 @@ export class AuthService {
     try {
       const payload = this.jwtService.verify(token);
       return this.createUserFromPayload(payload);
-    } catch {
+    } catch (error) {
+      this.logger.warn('Invalid token verification attempt');
       throw new UnauthorizedException(INVALID_TOKEN_MESSAGE);
     }
   }
