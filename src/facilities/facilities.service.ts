@@ -79,7 +79,7 @@ export class FacilitiesService {
         .sort(sortOptions)
         .skip(offsetForPagination)
         .limit(limit)
-        .lean()
+        .lean() // Get plain JS objects to increase performance when we have large datasets
         .exec(),
       this.facilityModel.countDocuments(mongoFilter).exec(),
     ]);
@@ -178,7 +178,7 @@ export class FacilitiesService {
     const facility = await this.facilityModel
       .findOne({ id })
       .select(this.publicFieldsOnly())
-      .lean()
+      .lean() // https://bsky.app/profile/pierrehenry.dev/post/3m7jpisawbe2i
       .exec();
 
     if (!facility) {
