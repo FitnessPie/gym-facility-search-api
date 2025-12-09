@@ -2,24 +2,19 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
-import { Server } from 'http';
 import { Context, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import express, { Express } from 'express';
 import serverlessExpress from '@codegenie/serverless-express';
 
-let cachedServer: Server;
+let cachedServer: ReturnType<typeof serverlessExpress>;
 
 async function bootstrap(): Promise<Express> {
   const expressApp = express();
-  
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(expressApp),
-    { 
-      logger: ['error', 'warn', 'log'],
-      abortOnError: false 
-    }
-  );
+
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
+    logger: ['error', 'warn', 'log'],
+    abortOnError: false,
+  });
 
   const logger = new Logger('Lambda');
 
@@ -50,6 +45,14 @@ export const handler = async (
     const expressApp = await bootstrap();
     cachedServer = serverlessExpress({ app: expressApp });
   }
-  
-  return cachedServer(event, context);
+
+  return new Promise((resolve, reject) => {
+    cachedServer(event, context, (error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result as APIGatewayProxyResult);
+      }
+    });
+  });
 };
