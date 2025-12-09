@@ -163,6 +163,7 @@ export class FacilitiesService {
   }
 
   private publicFieldsOnly() {
+    // Exclude any internal fields
     return '-_id -__v -createdAt -updatedAt';
   }
 

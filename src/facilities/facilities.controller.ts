@@ -36,7 +36,7 @@ export class FacilitiesController {
     description: 'Too many requests - Rate limit exceeded',
   })
   async getFacilities(
-    @Query() queryDto: GetFacilitiesDto,
+    @Query() queryDto: GetFacilitiesDto, // DTO for query parameters
   ): Promise<PaginatedFacilitiesResponseDto> {
     return this.facilitiesService.getFacilities(queryDto);
   }

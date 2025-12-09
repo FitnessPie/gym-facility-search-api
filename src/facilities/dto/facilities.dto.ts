@@ -18,6 +18,7 @@ export enum AmenityMatchMode {
   EXACT = 'exact',  // Facility must have exactly these amenities (no more, no less)
 }
 
+// DTO (DAta Transfer Object) for querying facilities
 export class GetFacilitiesDto {
   @ApiPropertyOptional()
   @IsOptional()
