@@ -105,7 +105,7 @@ export class FacilitiesService {
         page,
         limit,
         sortBy,
-        sortOrder
+        sortOrder,
       });
       const cacheTTL = this.getCacheTTL(name, amenities);
       await this.cacheManager.set(cacheKey, paginatedResult, cacheTTL);
