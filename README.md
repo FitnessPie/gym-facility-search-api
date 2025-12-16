@@ -91,7 +91,7 @@ yarn test:watch
 
 ## 🚀 Deployment
 
-This API can be deployed anywhere - Docker or Serverless.
+This API can be deployed either with Docker, `nest start`, or Serverless.
 
 ### Quick Deploy to Vercel (2 minutes)
 
