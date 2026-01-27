@@ -13,9 +13,14 @@ import {
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
+
 const CACHE_TTL_FACILITY_BY_ID = 3600;
 const CACHE_TTL_LIST_NO_FILTER = 1800;
 const CACHE_TTL_LIST_WITH_FILTER = 600;
+
+type AmenityMatchMode = 'all' | 'any' | 'exact';
+
+const ALLOWED_SORT_FIELDS = ['name', 'city', 'rating'];
 
 @Injectable()
 export class FacilitiesService {
@@ -28,15 +33,20 @@ export class FacilitiesService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private configService: ConfigService,
   ) {
-    this.defaultPageSize = this.configService.get('DEFAULT_PAGE_SIZE') || DEFAULT_PAGE_SIZE;
-    this.maxPageSize = this.configService.get('MAX_PAGE_SIZE') || MAX_PAGE_SIZE;
-    this.logger.log('FacilitiesService initialized');
+    this.defaultPageSize =
+      this.configService.get<number>('DEFAULT_PAGE_SIZE') ?? DEFAULT_PAGE_SIZE;
+    this.maxPageSize =
+      this.configService.get<number>('MAX_PAGE_SIZE') ?? MAX_PAGE_SIZE;
+
+    this.logger.log('FacilitiesService initialised');
   }
 
   /**
-   * Get facilities, with optional name and amenity filtering and pagination
+   * Get facilities with optional filtering, sorting, and pagination
    */
-  async getFacilities(queryDto: GetFacilitiesDto): Promise<PaginatedFacilitiesResponseDto> {
+  async getFacilities(
+    queryDto: GetFacilitiesDto,
+  ): Promise<PaginatedFacilitiesResponseDto> {
     const {
       name,
       amenities,
@@ -46,30 +56,49 @@ export class FacilitiesService {
       sortBy = 'name',
       sortOrder = 'asc',
     } = queryDto;
-    const limit = Math.min(requestedLimit, this.maxPageSize);
 
-    const shouldCache = this.shouldCacheQuery(name, amenities, page);
+    const safePage = Math.max(1, page);
+    const limit = Math.min(
+      Math.max(1, requestedLimit),
+      this.maxPageSize,
+    );
+
+    const shouldCache = this.shouldCacheQuery(name, amenities, safePage);
+
+    const cacheParams = {
+      name,
+      amenities,
+      amenityMatchMode,
+      page: safePage,
+      limit,
+      sortBy,
+      sortOrder,
+    };
 
     if (shouldCache) {
-      const cacheKey = this.generateCacheKey('facilities', {
-        name,
-        amenities,
-        amenityMatchMode,
-        page,
-        limit,
-        sortBy,
-        sortOrder
-      });
-      const cachedResult = await this.cacheManager.get<PaginatedFacilitiesResponseDto>(cacheKey);
+      const cacheKey = this.generateCacheKey(
+        'facilities',
+        cacheParams,
+      );
 
-      if (cachedResult) {
-        this.logger.debug(`Cache hit for query: ${cacheKey}`);
-        return cachedResult;
+      const cached =
+        await this.cacheManager.get<PaginatedFacilitiesResponseDto>(
+          cacheKey,
+        );
+
+      if (cached) {
+        this.logger.debug(`Cache hit: ${cacheKey}`);
+        return cached;
       }
     }
 
-    const mongoFilter = this.buildMongoFilter(name, amenities, amenityMatchMode);
-    const offsetForPagination = this.calculateOffset(page, limit);
+    const mongoFilter = this.buildMongoFilter(
+      name,
+      amenities,
+      amenityMatchMode,
+    );
+
+    const offset = this.calculateOffset(safePage, limit);
     const sortOptions = this.buildSortOptions(sortBy, sortOrder);
 
     const [facilities, totalCount] = await Promise.all([
@@ -77,74 +106,111 @@ export class FacilitiesService {
         .find(mongoFilter)
         .select(this.publicFieldsOnly())
         .sort(sortOptions)
-        .skip(offsetForPagination)
+        .skip(offset)
         .limit(limit)
-        .lean() // Get plain JS objects to increase performance when we have large datasets
+        .lean()
         .exec(),
+
       this.facilityModel.countDocuments(mongoFilter).exec(),
     ]);
 
-    const totalPages = Math.ceil(totalCount / limit);
+    const totalPages = Math.max(1, Math.ceil(totalCount / limit));
 
-    const paginatedResult: PaginatedFacilitiesResponseDto = {
+    const result: PaginatedFacilitiesResponseDto = {
       data: facilities as FacilityResponseDto[],
       meta: {
         total: totalCount,
-        page,
+        page: safePage,
         limit,
         totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
+        hasNextPage: safePage < totalPages,
+        hasPreviousPage: safePage > 1,
       },
     };
 
     if (shouldCache) {
-      const cacheKey = this.generateCacheKey('facilities', {
-        name,
-        amenities,
-        page,
-        limit,
-        sortBy,
-        sortOrder,
-      });
-      const cacheTTL = this.getCacheTTL(name, amenities);
-      await this.cacheManager.set(cacheKey, paginatedResult, cacheTTL);
-      this.logger.debug(`Cached query result: ${cacheKey}, TTL: ${cacheTTL}s`);
+      const cacheKey = this.generateCacheKey(
+        'facilities',
+        cacheParams,
+      );
+
+      const ttl = this.getCacheTTL(name, amenities);
+      await this.cacheManager.set(cacheKey, result, ttl);
+
+      this.logger.debug(`Cached: ${cacheKey} (TTL ${ttl}s)`);
     }
 
-    this.logger.log(`Retrieved ${facilities.length} facilities (page ${page}/${totalPages})`);
-    return paginatedResult;
+    return result;
+  }
+
+  async getFacilityById(id: string): Promise<FacilityResponseDto> {
+    const cacheKey = this.generateCacheKey('facility', { id });
+
+    const cached =
+      await this.cacheManager.get<FacilityResponseDto>(cacheKey);
+
+    if (cached) {
+      this.logger.debug(`Cache hit: facility ${id}`);
+      return cached;
+    }
+
+    const facility = await this.facilityModel
+      .findOne({ id })
+      .select(this.publicFieldsOnly())
+      .lean()
+      .exec();
+
+    if (!facility) {
+      this.logger.warn(`Facility not found: ${id}`);
+      throw new NotFoundException(
+        `Facility with ID "${id}" not found`,
+      );
+    }
+
+    const dto = facility as FacilityResponseDto;
+
+    await this.cacheManager.set(
+      cacheKey,
+      dto,
+      CACHE_TTL_FACILITY_BY_ID,
+    );
+
+    return dto;
   }
 
   private calculateOffset(page: number, limit: number): number {
     return (page - 1) * limit;
   }
 
-  private buildMongoFilter(name?: string, amenities?: string[], amenityMatchMode: string = 'all'): any {
-    const filter: any = {};
+  private buildMongoFilter(
+    name?: string,
+    amenities?: string[],
+    amenityMatchMode: AmenityMatchMode = 'all',
+  ): Record<string, any> {
+    const filter: Record<string, any> = {};
 
     if (name) {
       filter.name = this.createCaseInsensitiveRegex(name);
     }
 
-    if (amenities && amenities.length > 0) {
-      // Case-insensitive amenity matching
-      const amenityRegexes = amenities.map((amenity) => new RegExp(`^${amenity}$`, 'i'));
+    if (amenities?.length) {
+      const amenityRegexes = amenities.map(
+        (a) => new RegExp(`^${this.escapeRegex(a)}$`, 'i'),
+      );
 
       switch (amenityMatchMode) {
         case 'all':
-          // Must have all specified amenities (case-insensitive)
-          filter.facilities = { $all: amenityRegexes };
+          filter.amenities = { $all: amenityRegexes };
           break;
+
         case 'any':
-          // Must have at least one of the specified amenities
-          filter.facilities = { $in: amenityRegexes };
+          filter.amenities = { $in: amenityRegexes };
           break;
+
         case 'exact':
-          // Must have exactly these amenities (no more, no less)
           filter.$and = [
-            { facilities: { $all: amenityRegexes } },
-            { facilities: { $size: amenities.length } }
+            { amenities: { $all: amenityRegexes } },
+            { amenities: { $size: amenities.length } },
           ];
           break;
       }
@@ -153,68 +219,76 @@ export class FacilitiesService {
     return filter;
   }
 
-  private buildSortOptions(sortBy: string, sortOrder: string): Record<string, 1 | -1> {
-    return { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+  private buildSortOptions(
+    sortBy: string,
+    sortOrder: string,
+  ): Record<string, 1 | -1> {
+    const field = ALLOWED_SORT_FIELDS.includes(sortBy)
+      ? sortBy
+      : 'name';
+
+    return { [field]: sortOrder === 'asc' ? 1 : -1 };
   }
 
-  private createCaseInsensitiveRegex(searchTerm: string) {
-    const sanitized = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return { $regex: sanitized, $options: 'i' };
+  private createCaseInsensitiveRegex(value: string) {
+    return {
+      $regex: this.escapeRegex(value),
+      $options: 'i',
+    };
   }
 
-  private publicFieldsOnly() {
-    // Exclude any internal fields
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  private publicFieldsOnly(): string {
     return '-_id -__v -createdAt -updatedAt';
   }
 
-  async getFacilityById(id: string): Promise<FacilityResponseDto> {
-    const cacheKey = this.generateCacheKey('facility', { id });
-    const cachedFacility = await this.cacheManager.get<FacilityResponseDto>(cacheKey);
+  private generateCacheKey(
+    prefix: string,
+    params: Record<string, any>,
+  ): string {
+    const normalised = this.normaliseParams(params);
 
-    if (cachedFacility) {
-      this.logger.debug(`Cache hit for facility: ${id}`);
-      return cachedFacility;
-    }
-
-    const facility = await this.facilityModel
-      .findOne({ id })
-      .select(this.publicFieldsOnly())
-      .lean() // https://bsky.app/profile/pierrehenry.dev/post/3m7jpisawbe2i
-      .exec();
-
-    if (!facility) {
-      this.logger.warn(`Facility not found: ${id}`);
-      throw new NotFoundException(`Facility with ID "${id}" not found`);
-    }
-
-    const facilityDto = facility as FacilityResponseDto;
-    await this.cacheManager.set(cacheKey, facilityDto, CACHE_TTL_FACILITY_BY_ID);
-    this.logger.debug(`Cached facility: ${id}`);
-
-    return facilityDto;
-  }
-
-  private generateCacheKey(prefix: string, params: Record<string, any>): string {
-    const sortedParams = Object.keys(params)
+    const serialized = Object.keys(normalised)
       .sort()
-      .map((key) => `${key}:${params[key]}`)
+      .map((key) => `${key}:${normalised[key]}`)
       .join('|');
-    return `${prefix}:${sortedParams}`;
+
+    return `${prefix}:${serialized}`;
   }
 
-  private getCacheTTL(name?: string, amenities?: string[]): number {
-    if (name || (amenities && amenities.length > 0)) {
-      return CACHE_TTL_LIST_WITH_FILTER;
-    }
-    return CACHE_TTL_LIST_NO_FILTER;
+  private normaliseParams(
+    params: Record<string, any>,
+  ): Record<string, any> {
+    return Object.fromEntries(
+      Object.entries(params).map(([key, value]) => [
+        key,
+        Array.isArray(value) ? [...value].sort() : value,
+      ]),
+    );
   }
 
-  private shouldCacheQuery(name?: string, amenities?: string[], page: number = 1): boolean {
-    if (!name && (!amenities || amenities.length === 0) && page <= 3) {
+  private getCacheTTL(
+    name?: string,
+    amenities?: string[],
+  ): number {
+    return name || amenities?.length
+      ? CACHE_TTL_LIST_WITH_FILTER
+      : CACHE_TTL_LIST_NO_FILTER;
+  }
+
+  private shouldCacheQuery(
+    name?: string,
+    amenities?: string[],
+    page = 1,
+  ): boolean {
+    if (!name && !amenities?.length && page <= 3) {
       return true;
     }
 
-    if ((name || amenities) && page <= 2) {
+    if ((name || amenities?.length) && page <= 2) {
       return true;
     }
 
