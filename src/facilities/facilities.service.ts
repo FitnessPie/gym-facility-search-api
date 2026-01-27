@@ -20,7 +20,7 @@ const CACHE_TTL_LIST_WITH_FILTER = 600;
 
 type AmenityMatchMode = 'all' | 'any' | 'exact';
 
-const ALLOWED_SORT_FIELDS = ['name', 'city', 'rating'];
+const ALLOWED_SORT_FIELDS = ['name'];
 
 @Injectable()
 export class FacilitiesService {
